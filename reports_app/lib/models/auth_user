@@ -1,0 +1,52 @@
+import 'dart:convert';
+import 'user.dart';
+
+class AuthUser extends User {
+  final String token;
+
+  AuthUser({
+    required super.id,
+    required super.email,
+    required super.name,
+    required super.age,
+    required super.position,
+    required super.passwordHash,
+    required this.token,
+  });
+
+  bool get isAdmin => position == 1;
+  bool get isBasicUser => position == 0;
+
+  factory AuthUser.fromUserAndToken(User user, String token) {
+    return AuthUser(
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      age: user.age,
+      position: user.position,
+      passwordHash: user.passwordHash,
+      token: token,
+    );
+  }
+
+  factory AuthUser.fromJson(String str) => AuthUser.fromMap(json.decode(str));
+
+  @override
+  String toJson() => json.encode(toMap());
+
+  factory AuthUser.fromMap(Map<String, dynamic> json) => AuthUser(
+        id: json["id"],
+        email: json["email"],
+        name: json["name"],
+        age: json["age"],
+        position: json["position"],
+        passwordHash: json["passwordHash"],
+        token: json["token"],
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        ...super.toMap(),
+        "token": token,
+      };
+}

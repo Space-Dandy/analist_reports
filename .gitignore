@@ -1,0 +1,105 @@
+# ==========================
+# .NET Backend (reports-backend)
+# ==========================
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+reports-backend/[Dd]ebug/
+reports-backend/[Dd]ebugPublic/
+reports-backend/[Rr]elease/
+reports-backend/[Rr]eleases/
+reports-backend/x64/
+reports-backend/x86/
+reports-backend/[Bb]in/
+reports-backend/[Oo]bj/
+reports-backend/[Ll]og/
+
+# .NET Core
+reports-backend/project.lock.json
+reports-backend/project.fragment.lock.json
+reports-backend/artifacts/
+
+# Visual Studio cache/options
+reports-backend/.vs/
+
+# JetBrains Rider
+reports-backend/.idea/
+reports-backend/*.sln.iml
+
+# Secrets - IMPORTANT!
+reports-backend/appsettings.Development.json
+reports-backend/appsettings.json
+*.key
+*.pfx
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Entity Framework Migrations (optional - remove if you want to track migrations)
+reports-backend/Migrations/
+
+# ==========================
+# Flutter App (reports_app)
+# ==========================
+
+# Miscellaneous
+reports_app/*.class
+reports_app/*.log
+reports_app/*.pyc
+reports_app/*.swp
+reports_app/.DS_Store
+reports_app/.atom/
+reports_app/.buildlog/
+reports_app/.history
+reports_app/.svn/
+reports_app/migrate_working_dir/
+
+# IntelliJ related
+reports_app/*.iml
+reports_app/*.ipr
+reports_app/*.iws
+reports_app/.idea/
+
+# VS Code
+reports_app/.vscode/
+
+# Flutter/Dart/Pub related
+reports_app/**/doc/api/
+reports_app/**/ios/Flutter/.last_build_id
+reports_app/.dart_tool/
+reports_app/.flutter-plugins
+reports_app/.flutter-plugins-dependencies
+reports_app/.packages
+reports_app/.pub-cache/
+reports_app/.pub/
+reports_app/build/
+
+# Symbolication related
+reports_app/app.*.symbols
+
+# Obfuscation related
+reports_app/app.*.map.json
+
+# Android Studio will place build artifacts here
+reports_app/android/app/debug
+reports_app/android/app/profile
+reports_app/android/app/release
+
+# iOS
+reports_app/ios/Pods/
+reports_app/ios/.symlinks/
+reports_app/ios/Flutter/Flutter.framework
+reports_app/ios/Flutter/Flutter.podspec
+reports_app/ios/Flutter/Generated.xcconfig
+reports_app/ios/Flutter/ephemeral/
+reports_app/ios/Flutter/app.flx
+reports_app/ios/Flutter/app.zip
+reports_app/ios/Flutter/flutter_assets/
+reports_app/ios/Flutter/flutter_export_
