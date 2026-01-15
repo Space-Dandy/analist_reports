@@ -24,28 +24,34 @@ namespace reports_backend.Controllers
 
     // GET: api/users
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<User>>> GetAll()
+    public async Task<ActionResult<ApiResponse<IEnumerable<User>>>> GetAll()
     {
       var users = await _repository.GetAllAsync();
-      return Ok(users);
+      return Ok(ApiResponse<IEnumerable<User>>.SuccessResponse(users, "Users retrieved successfully."));
     }
 
     // GET: api/users/{id}
     [HttpGet("{id}")]
-    public async Task<ActionResult<User>> GetById(int id)
+    public async Task<ActionResult<ApiResponse<User>>> GetById(int id)
     {
       var user = await _repository.GetByIdAsync(id);
 
       if (user == null)
-        return NotFound();
+        return NotFound(ApiResponse<User>.ErrorResponse("User not found."));
 
-      return Ok(user);
+      return Ok(ApiResponse<User>.SuccessResponse(user, "User retrieved successfully."));
     }
 
     // POST: api/users
     [HttpPost]
-    public async Task<ActionResult<User>> Create([FromBody] RegisterUserDto regiserDto)
+    public async Task<ActionResult<ApiResponse<User>>> Create([FromBody] RegisterUserDto regiserDto)
     {
+      var existingUser = await _repository.GetByEmailAsync(regiserDto.Email);
+      if (existingUser != null)
+      {
+        return Conflict(ApiResponse<User>.ErrorResponse("Email is already registered."));
+      }
+
       var user = new User
       {
         Email = regiserDto.Email,
@@ -56,18 +62,19 @@ namespace reports_backend.Controllers
       };
 
       var created = await _repository.CreateAsync(user);
-      return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+      var response = ApiResponse<User>.SuccessResponse(created, "User created successfully.");
+      return CreatedAtAction(nameof(GetById), new { id = created.Id }, response);
     }
 
     [HttpPost("login")]
 
     //POST: api/users/login
-    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginDto loginDto)
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginDto loginDto)
     {
       var user = await _repository.GetByEmailAsync(loginDto.Email);
       if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
       {
-        return Unauthorized("Invalid email or password.");
+        return Unauthorized(ApiResponse<LoginResponse>.ErrorResponse("Invalid email or password."));
       }
 
       //Generar token JWT
@@ -79,7 +86,7 @@ namespace reports_backend.Controllers
         User = user
       };
 
-      return Ok(response);
+      return Ok(ApiResponse<LoginResponse>.SuccessResponse(response, "Login successful."));
     }
   }
 }
