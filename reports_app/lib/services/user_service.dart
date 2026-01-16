@@ -48,7 +48,7 @@ class UserService extends ChangeNotifier {
     Map<String, String> requestHeaders = {'Content-Type': 'application/json'};
     Map<String, String> requestBody = {'email': email, 'password': password};
 
-    final url = Uri.http(baseUrl, 'api/users/login');
+    final url = Uri.http(baseUrl, 'incidents-report-backend/api/users/login');
     setIsLoading(true);
     try {
       final resp = await http
@@ -141,7 +141,7 @@ class UserService extends ChangeNotifier {
       if (token != null) 'Authorization': 'Bearer $token',
     };
     setIsLoading(true);
-    final url = Uri.http(baseUrl, 'api/users/$id');
+    final url = Uri.http(baseUrl, 'incidents-report-backend/api/users/$id');
     try {
       final resp = await http
           .get(url, headers: requestHeaders)
@@ -195,7 +195,7 @@ class UserService extends ChangeNotifier {
       'Authorization': 'Bearer $idToken',
     };
     setIsLoading(true);
-    final url = Uri.http(baseUrl, 'api/users');
+    final url = Uri.http(baseUrl, 'incidents-report-backend/api/users');
     try {
       final resp = await http
           .get(url, headers: requestHeaders)

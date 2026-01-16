@@ -91,7 +91,10 @@ class IncidentDetails extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(
-                        Uri.http(baseUrl, inc.imagePath).toString(),
+                        Uri.http(
+                          baseUrl,
+                          "incidents-report-backend/${inc.imagePath}",
+                        ).toString(),
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,

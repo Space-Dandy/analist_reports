@@ -33,7 +33,9 @@ class IncidentsService extends ChangeNotifier {
       'Authorization': 'Bearer $idToken',
     };
     setIsLoading(true);
-    final path = isAdmin ? 'api/incidents' : 'api/incidents/my';
+    final path = isAdmin
+        ? 'incidents-report-backend/api/incidents'
+        : 'incidents-report-backend/api/incidents/my';
     final query = (isAdmin && userId != null)
         ? {'userId': userId.toString()}
         : null;
@@ -83,7 +85,10 @@ class IncidentsService extends ChangeNotifier {
     };
 
     setIsLoading(true);
-    final url = Uri.http(baseUrl, 'api/incidents/$id/authorize');
+    final url = Uri.http(
+      baseUrl,
+      'incidents-report-backend/api/incidents/$id/authorize',
+    );
     try {
       final resp = await http
           .post(url, headers: requestHeaders, body: json.encode(status))
@@ -124,7 +129,7 @@ class IncidentsService extends ChangeNotifier {
     String? imageFilePath,
   }) async {
     setIsLoading(true);
-    final uri = Uri.http(baseUrl, 'api/incidents');
+    final uri = Uri.http(baseUrl, 'incidents-report-backend/api/incidents');
 
     try {
       final request = http.MultipartRequest('POST', uri);
