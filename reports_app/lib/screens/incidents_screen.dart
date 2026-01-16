@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reports_app/models/incidents.dart';
 import 'package:reports_app/models/request_response.dart';
+import 'package:reports_app/screens/incident_details.dart';
 import 'package:reports_app/services/incidents_service.dart';
 import 'package:reports_app/services/user_service.dart';
 import 'package:reports_app/widgets/gradient_background.dart';
@@ -73,6 +74,7 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
       builder: (context, userService, child) {
         return GradientBackground(
           child: Scaffold(
+            backgroundColor: Colors.transparent,
             appBar: AppBar(
               title: const Text('Incidentes'),
               actions: [
@@ -110,8 +112,19 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
                         : ListView.builder(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             itemCount: incidents.length,
-                            itemBuilder: (context, index) =>
-                                IncidentCard(incident: incidents[index]),
+                            itemBuilder: (context, index) => IncidentCard(
+                              incident: incidents[index],
+                              onTap: () {
+                                final inc = incidents[index];
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        IncidentDetails(incident: inc),
+                                  ),
+                                ).then((_) => _load());
+                              },
+                            ),
                           ),
                   ),
             floatingActionButton: userService.isAdmin

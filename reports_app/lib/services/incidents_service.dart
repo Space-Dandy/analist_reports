@@ -8,18 +8,10 @@ class IncidentsService extends ChangeNotifier {
   List<Incident> _incidents = [];
   List<Incident> get incidents => _incidents;
 
-  Incident? _selectedIncident;
-  Incident? get selectedIncident => _selectedIncident;
-
   bool isLoading = false;
 
   void setIncidents(List<Incident> newIncidents) {
     _incidents = newIncidents;
-    notifyListeners();
-  }
-
-  void setSelectedIncident(Incident? incident) {
-    _selectedIncident = incident;
     notifyListeners();
   }
 

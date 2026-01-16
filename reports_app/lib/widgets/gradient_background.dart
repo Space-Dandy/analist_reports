@@ -10,15 +10,15 @@ class GradientBackground extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          begin: Alignment(-0.8, -1),
+          end: Alignment(0.8, 1),
           colors: [
             Color(0xFFFFFFFF), // #ffffff
             Color(0xFFDDD3ED), // #ddd3ed
           ],
         ),
       ),
-      child: child,
+      child: SafeArea(child: child),
     );
   }
 }
