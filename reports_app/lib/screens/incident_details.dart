@@ -1,6 +1,8 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reports_app/models/incidents.dart';
+import 'package:reports_app/services/incidents_service.dart';
 import 'package:reports_app/services/user_service.dart';
 import 'package:reports_app/utils/base_url.dart';
 import 'package:reports_app/utils/format_date.dart';
@@ -65,118 +67,150 @@ class IncidentDetails extends StatelessWidget {
     );
     const bodyStyle = TextStyle(color: Colors.black87, fontSize: 16);
 
-    return GradientBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text('Detalle del incidente')),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (inc.imagePath.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    Uri.http(baseUrl, inc.imagePath).toString(),
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 180,
-                      color: Colors.grey[200],
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.broken_image,
-                        size: 48,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              const Text('Folio', style: captionStyle),
-              Text(inc.folioNumber, style: headingStyle),
-              const SizedBox(height: 12),
-              Row(
+    return Consumer<IncidentsService>(
+      builder: (context, incidentService, child) {
+        return GradientBackground(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(title: const Text('Detalle del incidente')),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Estado del Reporte: ', style: captionStyle),
-                  const SizedBox(width: 8),
-                  Text(
-                    _statusText(inc.status),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    formatDate(inc.dateReported),
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text('Título', style: captionStyle),
-              Text(inc.title, style: bodyStyle),
-              const SizedBox(height: 12),
-              const Text('Descripción', style: captionStyle),
-              Text(inc.description, style: bodyStyle),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              const Text('Usuario que reportó', style: captionStyle),
-              Text(inc.userName, style: bodyStyle),
-              const SizedBox(height: 8),
-              if (inc.authUserName != null && inc.authUserName!.isNotEmpty) ...[
-                const Text('Autorizado por', style: captionStyle),
-                Text(inc.authUserName!, style: bodyStyle),
-                const SizedBox(height: 8),
-              ],
-              if (formattedResolution != null) ...[
-                const Text('Resolution date', style: captionStyle),
-                Text(formattedResolution, style: bodyStyle),
-                const SizedBox(height: 8),
-              ],
-              const SizedBox(height: 20),
-              if (userSvc.isAdmin) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: ButtonWidget(
-                        buttonText: Text(
-                          'Aprobar',
-                          style: TextStyle(color: Colors.green[700]),
+                  if (inc.imagePath.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        Uri.http(baseUrl, inc.imagePath).toString(),
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 180,
+                          color: Colors.grey[200],
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.broken_image,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                         ),
-                        handlePressed: () {},
-                        gradientColors: [
-                          Colors.white,
-                          const Color.fromARGB(255, 213, 255, 235),
-                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ButtonWidget(
-                        buttonText: Text(
-                          'Rechazar',
-                          style: TextStyle(color: Colors.red[700]),
+                  const SizedBox(height: 12),
+                  const Text('Folio', style: captionStyle),
+                  Text(inc.folioNumber, style: headingStyle),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text('Estado del Reporte: ', style: captionStyle),
+                      const SizedBox(width: 8),
+                      Text(
+                        _statusText(inc.status),
+                        style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
-                        handlePressed: () {},
-                        gradientColors: [
-                          Colors.white,
-                          const Color.fromARGB(255, 255, 207, 207),
-                        ],
                       ),
+                      const Spacer(),
+                      Text(
+                        formatDate(inc.dateReported),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Título', style: captionStyle),
+                  Text(inc.title, style: bodyStyle),
+                  const SizedBox(height: 12),
+                  const Text('Descripción', style: captionStyle),
+                  Text(inc.description, style: bodyStyle),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Text('Usuario que reportó', style: captionStyle),
+                  Text(inc.userName, style: bodyStyle),
+                  const SizedBox(height: 8),
+                  if (inc.authUserName != null &&
+                      inc.authUserName!.isNotEmpty) ...[
+                    const Text('Autorizado por', style: captionStyle),
+                    Text(inc.authUserName!, style: bodyStyle),
+                    const SizedBox(height: 8),
+                  ],
+                  if (formattedResolution != null) ...[
+                    const Text('Resolution date', style: captionStyle),
+                    Text(formattedResolution, style: bodyStyle),
+                    const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 20),
+                  if (userSvc.isAdmin && inc.status == 0) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ButtonWidget(
+                            buttonText: Text(
+                              'Rechazar',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            handlePressed: () {
+                              incidentService.resolveIncident(
+                                userSvc.token!,
+                                inc.id,
+                                2,
+                              );
+                            },
+                            gradientColors: [
+                              const Color(0xFFFF512F),
+                              const Color(0xFFDD2476),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ButtonWidget(
+                            buttonText: Text(
+                              'Aprobar',
+                              style: TextStyle(color: Colors.green[900]),
+                            ),
+                            handlePressed: () {
+                              incidentService
+                                  .resolveIncident(userSvc.token!, inc.id, 1)
+                                  .then((val) {
+                                    if (!val.error) {
+                                      if (!context.mounted) return;
+                                      Navigator.pop(context);
+                                    }
+                                    if (!context.mounted) return;
+                                    Flushbar(
+                                      title: val.error ? 'Error' : 'Éxito',
+                                      message: val.message,
+                                      duration: const Duration(seconds: 3),
+                                      backgroundColor: val.error
+                                          ? Colors.red
+                                          : Colors.green,
+                                    ).show(context);
+                                  });
+                            },
+                            gradientColors: [
+                              const Color(0xFFA8ff78),
+                              const Color(0xFF78ffd6),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ],
-            ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

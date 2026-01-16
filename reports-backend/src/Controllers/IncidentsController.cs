@@ -28,13 +28,22 @@ namespace reports_backend.Controllers
 
     // GET: api/incidents
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Incident>>> GetAll()
+    public async Task<ActionResult<IEnumerable<Incident>>> GetAll([FromQuery] int? userId)
     {
       var positionClaim = User.FindFirst("position")?.Value;
       if (positionClaim != ((int)UserPosition.Admin).ToString())
         return StatusCode(403, ApiResponse<string>.ErrorResponse("Only admins can view all incidents."));
 
-      var incidents = await _repository.GetAllAsync();
+      IEnumerable<Incident> incidents;
+      if (userId.HasValue)
+      {
+        incidents = await _repository.GetByUserIdAsync(userId.Value);
+      }
+      else
+      {
+        incidents = await _repository.GetAllAsync();
+      }
+
       return Ok(ApiResponse<IEnumerable<Incident>>.SuccessResponse(incidents));
     }
 

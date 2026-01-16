@@ -29,6 +29,36 @@ class IncidentsRes {
   };
 }
 
+class IncidentResolveRes {
+  bool success;
+  Incident data;
+  String? message;
+
+  IncidentResolveRes({
+    required this.success,
+    required this.data,
+    required this.message,
+  });
+
+  factory IncidentResolveRes.fromJson(String str) =>
+      IncidentResolveRes.fromMap(json.decode(str));
+
+  String toJson() => json.encode(toMap());
+
+  factory IncidentResolveRes.fromMap(Map<String, dynamic> json) =>
+      IncidentResolveRes(
+        success: json["success"],
+        data: Incident.fromMap(json["data"]),
+        message: json["message"],
+      );
+
+  Map<String, dynamic> toMap() => {
+    "success": success,
+    "data": data.toMap(),
+    "message": message,
+  };
+}
+
 class Incident {
   int id;
   int userId;
@@ -39,7 +69,7 @@ class Incident {
   String dateReported;
   int status;
   String imagePath;
-  String? authUserId;
+  int? authUserId;
   String? authUserName;
   String? resolutionDate;
 

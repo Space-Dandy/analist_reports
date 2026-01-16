@@ -16,9 +16,11 @@ class IncidentsScreen extends StatefulWidget {
   State<IncidentsScreen> createState() => _IncidentsScreenState();
 }
 
+// ...existing code...
 class _IncidentsScreenState extends State<IncidentsScreen> {
   bool _loading = false;
   String? _error;
+  int? _selectedUserId;
 
   @override
   void initState() {
@@ -26,7 +28,7 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() async {
+  Future<void> _load({int? userId}) async {
     setState(() {
       _loading = true;
       _error = null;
@@ -45,6 +47,7 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
     final RequestResponseModel res = await service.fetchIncidents(
       userService.token!,
       userService.isAdmin,
+      userId: userId,
     );
 
     if (res.error) {
@@ -58,12 +61,29 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
       }
     }
 
+    if (userService.isAdmin) {
+      await userService.getAllUsers(userService.token!);
+    }
+
     setState(() {
       _loading = false;
     });
   }
 
-  Future<void> _refresh() async => await _load();
+  Future<void> _refresh() async => await _load(userId: _selectedUserId);
+
+  List<Map<String, dynamic>> _extractUsers(List<Incident> incidents) {
+    final map = <int, String>{};
+    for (final i in incidents) {
+      map[i.userId] = i.userName;
+    }
+    return map.entries.map((e) => {'id': e.key, 'name': e.value}).toList();
+  }
+
+  void _applyFilter(int? userId) {
+    setState(() => _selectedUserId = userId);
+    _load(userId: userId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,61 +92,124 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
 
     return Consumer<UserService>(
       builder: (context, userService, child) {
+        final isAdmin = userService.isAdmin;
+        final userOptions = (userService.users.isNotEmpty)
+            ? userService.users
+                  .map((u) => {'id': u.id, 'name': u.name})
+                  .toList()
+            : _extractUsers(incidents);
+
         return GradientBackground(
           child: Scaffold(
             backgroundColor: Colors.transparent,
             appBar: AppBar(
-              title: const Text('Incidentes'),
+              title: const Text('Reporte de Incidentes'),
               actions: [
-                IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
+                IconButton(
+                  icon: const Icon(Icons.exit_to_app),
+                  onPressed: () {
+                    userService.logout();
+                    Navigator.pushReplacementNamed(context, '/login');
+                  },
+                ),
               ],
             ),
-            body: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                ? RefreshIndicator(
-                    onRefresh: _refresh,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        const SizedBox(height: 200),
-                        Center(
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
+
+            body: Column(
+              children: [
+                if (isAdmin)
+                  SizedBox(
+                    height: 60,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 1 + userOptions.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, idx) {
+                          if (idx == 0) {
+                            final selected = _selectedUserId == null;
+                            return ChoiceChip(
+                              label: const Text('Todos'),
+                              selected: selected,
+                              onSelected: (_) => _applyFilter(null),
+                            );
+                          }
+
+                          final user = userOptions[idx - 1];
+                          final int id = user['id'] as int;
+                          final String name = user['name'] as String;
+                          final bool selected = _selectedUserId == id;
+
+                          return ChoiceChip(
+                            label: Text(name),
+                            selected: selected,
+                            onSelected: (_) => _applyFilter(id),
+                          );
+                        },
+                      ),
                     ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _refresh,
-                    child: incidents.isEmpty
-                        ? ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: const [
-                              SizedBox(height: 200),
-                              Center(child: Text('No hay incidentes')),
-                            ],
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            itemCount: incidents.length,
-                            itemBuilder: (context, index) => IncidentCard(
-                              incident: incidents[index],
-                              onTap: () {
-                                final inc = incidents[index];
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        IncidentDetails(incident: inc),
-                                  ),
-                                ).then((_) => _load());
-                              },
-                            ),
-                          ),
                   ),
+
+                Expanded(
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                      ? RefreshIndicator(
+                          onRefresh: _refresh,
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              const SizedBox(height: 200),
+                              Center(
+                                child: Text(
+                                  _error!,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _refresh,
+                          child: incidents.isEmpty
+                              ? ListView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  children: const [
+                                    SizedBox(height: 200),
+                                    Center(child: Text('No hay incidentes')),
+                                  ],
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  itemCount: incidents.length,
+                                  itemBuilder: (context, index) => IncidentCard(
+                                    incident: incidents[index],
+                                    onTap: () {
+                                      final inc = incidents[index];
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              IncidentDetails(incident: inc),
+                                        ),
+                                      ).then(
+                                        (_) => _load(userId: _selectedUserId),
+                                      );
+                                    },
+                                  ),
+                                ),
+                        ),
+                ),
+              ],
+            ),
+
             floatingActionButton: userService.isAdmin
                 ? null
                 : FloatingActionButton(
@@ -134,7 +217,7 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
                       Navigator.pushNamed(
                         context,
                         '/create-incident',
-                      ).then((_) => _load());
+                      ).then((_) => _load(userId: _selectedUserId));
                     },
                     child: const Icon(Icons.add),
                   ),
@@ -144,3 +227,4 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
     );
   }
 }
+// ...existing code...

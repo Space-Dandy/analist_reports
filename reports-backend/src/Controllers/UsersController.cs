@@ -6,6 +6,8 @@ using reports_backend.Repositories;
 using reports_backend.DTOs;
 using reports_backend.Services;
 using BCrypt.Net;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace reports_backend.Controllers
 {
@@ -20,14 +22,6 @@ namespace reports_backend.Controllers
     {
       _repository = repository;
       _tokenService = tokenService;
-    }
-
-    // GET: api/users
-    [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<User>>>> GetAll()
-    {
-      var users = await _repository.GetAllAsync();
-      return Ok(ApiResponse<IEnumerable<User>>.SuccessResponse(users, "Users retrieved successfully."));
     }
 
     // GET: api/users/{id}
@@ -87,6 +81,19 @@ namespace reports_backend.Controllers
       };
 
       return Ok(ApiResponse<LoginResponse>.SuccessResponse(response, "Login successful."));
+    }
+
+    // GET: api/users
+    [HttpGet]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<IEnumerable<User>>>> GetAll()
+    {
+      var positionClaim = User.FindFirst("position")?.Value;
+      if (positionClaim != ((int)UserPosition.Admin).ToString())
+        return StatusCode(403, ApiResponse<string>.ErrorResponse("Only admins can access all users."));
+
+      var users = await _repository.GetAllAsync();
+      return Ok(ApiResponse<IEnumerable<User>>.SuccessResponse(users, "Users retrieved successfully."));
     }
   }
 }

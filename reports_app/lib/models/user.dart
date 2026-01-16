@@ -1,17 +1,17 @@
 import 'dart:convert';
 
-class UserData {
+class UsersRes {
   List<User>? data;
   bool success;
   String? message;
 
-  UserData({required this.data, required this.success, required this.message});
+  UsersRes({required this.data, required this.success, required this.message});
 
-  factory UserData.fromJson(String str) => UserData.fromMap(json.decode(str));
+  factory UsersRes.fromJson(String str) => UsersRes.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
-  factory UserData.fromMap(Map<String, dynamic> json) => UserData(
+  factory UsersRes.fromMap(Map<String, dynamic> json) => UsersRes(
     data: json["data"] == null
         ? null
         : List<User>.from(json["data"].map((x) => User.fromMap(x))),

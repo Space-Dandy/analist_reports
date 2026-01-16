@@ -17,6 +17,9 @@ class UserService extends ChangeNotifier {
   bool get isAdmin => _isAdmin;
   bool isLoading = false;
 
+  List<User> _users = [];
+  List<User> get users => _users;
+
   void setCurrentUser(AuthUser? user) {
     _currentUser = user;
     notifyListeners();
@@ -34,6 +37,11 @@ class UserService extends ChangeNotifier {
 
   void logout() {
     setCurrentUser(null);
+  }
+
+  void setUsers(List<User> newUsers) {
+    _users = newUsers;
+    notifyListeners();
   }
 
   Future<RequestResponseModel> loginUser(String email, String password) async {
@@ -121,6 +129,47 @@ class UserService extends ChangeNotifier {
       return RequestResponseModel(
         error: true,
         message: 'Ocurrió un error inesperado: $e',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  Future<RequestResponseModel> getAllUsers(String idToken) async {
+    Map<String, String> requestHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $idToken',
+    };
+    setIsLoading(true);
+    final url = Uri.http(baseUrl, 'api/users');
+    try {
+      final resp = await http
+          .get(url, headers: requestHeaders)
+          .timeout(const Duration(seconds: 10));
+      if (resp.statusCode >= 500) {
+        return RequestResponseModel(
+          error: true,
+          message:
+              'Error del servidor ${resp.statusCode}. Favor de contactar al administrador.',
+        );
+      }
+      final usersRes = UsersRes.fromJson(resp.body);
+      if (!usersRes.success) {
+        return RequestResponseModel(
+          error: true,
+          message: usersRes.message ?? 'Fallo al obtener los usuarios.',
+        );
+      }
+      setUsers(usersRes.data!);
+      return RequestResponseModel(
+        error: false,
+        message: 'Usuarios obtenidos correctamente.',
+      );
+    } on Exception catch (e) {
+      setIsLoading(false);
+      return RequestResponseModel(
+        error: true,
+        message: 'Error de conexión. Favor de intentar más tarde. $e',
       );
     } finally {
       setIsLoading(false);
