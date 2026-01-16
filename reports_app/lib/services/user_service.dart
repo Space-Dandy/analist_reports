@@ -101,7 +101,7 @@ class UserService extends ChangeNotifier {
       'position': 0,
     };
 
-    final url = Uri.http(baseUrl, 'api/users');
+    final url = Uri.http(baseUrl, 'incidents-report-backend/api/users');
     setIsLoading(true);
     try {
       final resp = await http

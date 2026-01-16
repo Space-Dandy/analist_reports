@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:reports_app/utils/base_url.dart';
 import 'package:reports_app/utils/format_date.dart';
 
 import '../models/incidents.dart';
@@ -41,7 +42,6 @@ class IncidentCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onTap == null ? null : () => onTap?.call(),
@@ -124,13 +124,56 @@ class IncidentCard extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                formatDate(incident.dateReported),
+                                style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        Text(
-                          formatDate(incident.dateReported),
-                          style: TextStyle(color: Colors.black54),
-                        ),
+                        const SizedBox(width: 8),
+                        // Image thumbnail
+                        if (incident.imagePath.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              Uri.http(
+                                baseUrl,
+                                "incidents-report-backend/${incident.imagePath}",
+                              ).toString(),
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey[300],
+                                child: const Icon(
+                                  Icons.broken_image,
+                                  size: 24,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.image_outlined,
+                              size: 24,
+                              color: Colors.grey,
+                            ),
+                          ),
                       ],
                     ),
                   ),

@@ -232,9 +232,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   const SizedBox(height: 16),
 
-                  // Login Link
+                  //Volver al Login
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                     child: const Text(
                       "¿Ya tienes una cuenta? Inicia sesión",
                       style: TextStyle(color: Color(0xFF6B4EFF)),

@@ -148,14 +148,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Register Link
                   TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SignupScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignupScreen(),
+                              ),
+                            );
+                          },
                     child: const Text(
                       "¿No tienes una cuenta? Regístrate",
                       style: TextStyle(color: Color(0xFF6B4EFF)),

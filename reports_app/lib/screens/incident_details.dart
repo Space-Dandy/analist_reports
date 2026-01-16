@@ -8,6 +8,7 @@ import 'package:reports_app/services/user_service.dart';
 import 'package:reports_app/utils/base_url.dart';
 import 'package:reports_app/utils/format_date.dart';
 import 'package:reports_app/widgets/button_widget.dart';
+import 'package:reports_app/widgets/full_screen_image.dart';
 import 'package:reports_app/widgets/gradient_background.dart';
 
 class IncidentDetails extends StatelessWidget {
@@ -88,24 +89,39 @@ class IncidentDetails extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (inc.imagePath.isNotEmpty)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        Uri.http(
-                          baseUrl,
-                          "incidents-report-backend/${inc.imagePath}",
-                        ).toString(),
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FullScreenImage(
+                              imageUrl: Uri.http(
+                                baseUrl,
+                                "incidents-report-backend/${inc.imagePath}",
+                              ).toString(),
+                            ),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          Uri.http(
+                            baseUrl,
+                            "incidents-report-backend/${inc.imagePath}",
+                          ).toString(),
                           height: 180,
-                          color: Colors.grey[200],
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.broken_image,
-                            size: 48,
-                            color: Colors.grey,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 180,
+                            color: Colors.grey[200],
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ),
