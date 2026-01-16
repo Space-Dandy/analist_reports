@@ -15,14 +15,14 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(59130); 
-    options.ListenLocalhost(59129, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
+// builder.WebHost.ConfigureKestrel(options =>
+// {
+//     options.ListenAnyIP(59130); 
+//     options.ListenLocalhost(59129, listenOptions =>
+//     {
+//         listenOptions.UseHttps();
+//     });
+// });
 
 // Servicios
 builder.Services.AddControllers();
@@ -52,6 +52,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 //Cors
 builder.Services.AddCors(options =>
 {
