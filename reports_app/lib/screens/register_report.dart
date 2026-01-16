@@ -48,13 +48,35 @@ class _RegisterReportState extends State<RegisterReport> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_titleCtrl.text.trim().isEmpty || _descCtrl.text.trim().isEmpty) {
+      if (!context.mounted) return;
+      Flushbar(
+        title: 'Error',
+        message: 'Llena todos los campos.',
+        duration: const Duration(seconds: 3),
+      ).show(context);
+      return;
+    }
+
+    if (_imageFile == null) {
+      if (!context.mounted) return;
+      Flushbar(
+        title: 'Foto requerida',
+        message: 'Toma una foto antes de enviar el reporte.',
+        duration: const Duration(seconds: 3),
+      ).show(context);
+      return;
+    }
     final userSvc = Provider.of<UserService>(context, listen: false);
     final incidentsSvc = Provider.of<IncidentsService>(context, listen: false);
 
     if (userSvc.token == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please login')));
+      Flushbar(
+        title: 'Error',
+        message: 'Por favor inicia sesión de nuevo.',
+        duration: const Duration(seconds: 3),
+      ).show(context);
       return;
     }
 
@@ -67,12 +89,6 @@ class _RegisterReportState extends State<RegisterReport> {
       imageFilePath: _imageFile?.path,
     );
     setState(() => _submitting = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(res.message ?? (res.error ? 'Failed' : 'Created')),
-      ),
-    );
 
     if (!res.error && context.mounted) {
       Navigator.of(context).pop(true);
