@@ -10,14 +10,16 @@ class AuthResData {
   AuthResData({required this.success, this.message, this.authRes});
 
   factory AuthResData.fromJson(String str) =>
-      AuthResData.fromMap(json.decode(str));
+      AuthResData.fromMap(json.decode(str) as Map<String, dynamic>);
 
   String toJson() => json.encode(toMap());
 
   factory AuthResData.fromMap(Map<String, dynamic> json) => AuthResData(
-    success: json["success"],
-    message: json["message"],
-    authRes: json["data"] == null ? null : AuthRes.fromJson(json["data"]),
+    success: json["success"] as bool,
+    message: json["message"] as String?,
+    authRes: json["data"] == null
+        ? null
+        : AuthRes.fromMap(json["data"] as Map<String, dynamic>),
   );
 
   Map<String, dynamic> toMap() => {
@@ -33,12 +35,15 @@ class AuthRes {
 
   AuthRes({required this.token, required this.user});
 
-  factory AuthRes.fromJson(String str) => AuthRes.fromMap(json.decode(str));
+  factory AuthRes.fromJson(String str) =>
+      AuthRes.fromMap(json.decode(str) as Map<String, dynamic>);
 
   String toJson() => json.encode(toMap());
 
-  factory AuthRes.fromMap(Map<String, dynamic> json) =>
-      AuthRes(token: json["token"], user: User.fromMap(json["user"]));
+  factory AuthRes.fromMap(Map<String, dynamic> json) => AuthRes(
+    token: json["token"] as String,
+    user: User.fromMap(json["user"] as Map<String, dynamic>),
+  );
 
   Map<String, dynamic> toMap() => {"token": token, "user": user.toMap()};
 }

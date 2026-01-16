@@ -1,5 +1,8 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:reports_app/screens/signup_screen.dart';
+import 'package:reports_app/services/user_service.dart';
 
 import '../widgets/button_widget.dart';
 import '../widgets/glassmorphism_input.dart';
@@ -170,23 +173,29 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      // TODO: Implement login API call
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
+    setState(() => _isLoading = true);
 
-      setState(() {
-        _isLoading = false;
-      });
+    final userService = Provider.of<UserService>(context, listen: false);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login functionality coming soon!')),
-        );
-      }
+    final res = await userService.loginUser(email, password);
+
+    setState(() => _isLoading = false);
+
+    if (!mounted) return;
+
+    if (res.error) {
+      Flushbar(
+        title: 'Error',
+        message: res.message,
+        duration: const Duration(seconds: 3),
+      ).show(context);
+      return;
     }
+
+    Navigator.pushReplacementNamed(context, '/incidents');
   }
 }

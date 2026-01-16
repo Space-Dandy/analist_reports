@@ -3,16 +3,18 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:reports_app/models/api_config.dart';
 import 'package:reports_app/models/auth_res.dart';
 import 'package:reports_app/models/auth_user.dart';
 import 'package:reports_app/models/request_response.dart';
 import 'package:reports_app/models/user.dart';
+import 'package:reports_app/utils/base_url.dart';
 
 class UserService extends ChangeNotifier {
   AuthUser? _currentUser;
   AuthUser? get currentUser => _currentUser;
   String? get token => _currentUser?.token;
+  bool _isAdmin = false;
+  bool get isAdmin => _isAdmin;
   bool isLoading = false;
 
   void setCurrentUser(AuthUser? user) {
@@ -22,6 +24,11 @@ class UserService extends ChangeNotifier {
 
   void setIsLoading(bool value) {
     isLoading = value;
+    notifyListeners();
+  }
+
+  void setIsAdmin(bool value) {
+    _isAdmin = value;
     notifyListeners();
   }
 
@@ -56,6 +63,7 @@ class UserService extends ChangeNotifier {
       final authRes = authResData.authRes!;
       final authUser = AuthUser.fromUserAndToken(authRes.user, authRes.token);
       setCurrentUser(authUser);
+      setIsAdmin(authRes.user.position == 1);
       return RequestResponseModel(
         error: false,
         message: '¡Bienvenido ${authUser.name}!',

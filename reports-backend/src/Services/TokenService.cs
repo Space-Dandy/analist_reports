@@ -27,8 +27,8 @@ namespace reports_backend.Services
         new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
         new Claim(JwtRegisteredClaimNames.Email, user.Email),
         new Claim(ClaimTypes.Name, user.Name),
-        new Claim("position", user.Position.ToString()),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        new Claim("position", ((int)user.Position).ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
       };
 
       var token = new JwtSecurityToken(

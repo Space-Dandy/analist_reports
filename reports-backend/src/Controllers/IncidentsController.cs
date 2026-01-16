@@ -16,7 +16,7 @@ namespace reports_backend.Controllers
 {
   [ApiController]
   [Route("api/[controller]")]
-  [Authorize]  // 🔒 All endpoints require JWT token
+  [Authorize]
   public class IncidentsController : ControllerBase
   {
     private readonly IIncidentRepository _repository;
@@ -30,7 +30,8 @@ namespace reports_backend.Controllers
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Incident>>> GetAll()
     {
-      if (!User.IsInRole("Admin"))
+      var positionClaim = User.FindFirst("position")?.Value;
+      if (positionClaim != ((int)UserPosition.Admin).ToString())
         return StatusCode(403, ApiResponse<string>.ErrorResponse("Only admins can view all incidents."));
 
       var incidents = await _repository.GetAllAsync();
@@ -109,7 +110,7 @@ namespace reports_backend.Controllers
         Description = description,
         Status = status,
         ImagePath = imagePath,
-        DateReported = DateTime.UtcNow
+        DateReported = DateTime.Now
       };
 
       var created = await _repository.CreateAsync(incident);
@@ -120,7 +121,8 @@ namespace reports_backend.Controllers
     public async Task<IActionResult> AuthorizeIncident(int id, [FromBody] IncidentStatus status)
     {
       // Solo admins
-      var isAdmin = User.IsInRole("Admin");
+      var positionClaim = User.FindFirst("position")?.Value;
+      var isAdmin = positionClaim == ((int)UserPosition.Admin).ToString();
       if (!isAdmin) return Unauthorized(ApiResponse<string>.ErrorResponse("Unauthorized"));
 
       var incident = await _repository.GetByIdAsync(id);

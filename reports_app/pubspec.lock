@@ -179,14 +179,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
-  premium_toast_flutter:
-    dependency: "direct main"
-    description:
-      name: premium_toast_flutter
-      sha256: bb955a4b7c4f39cfde31ef193792416d429534dab5e400c18546a87b3c3d8972
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.4"
   provider:
     dependency: "direct main"
     description:
@@ -281,5 +273,5 @@ packages:
     source: hosted
     version: "1.1.1"
 sdks:
-  dart: ">=3.9.2 <4.0.0"
+  dart: ">=3.9.0 <4.0.0"
   flutter: ">=3.18.0-18.0.pre.54"
