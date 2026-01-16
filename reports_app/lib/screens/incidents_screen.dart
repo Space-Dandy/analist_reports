@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:reports_app/models/incidents.dart';
 import 'package:reports_app/models/request_response.dart';
 import 'package:reports_app/screens/incident_details.dart';
+import 'package:reports_app/screens/register_report.dart';
 import 'package:reports_app/services/incidents_service.dart';
 import 'package:reports_app/services/user_service.dart';
 import 'package:reports_app/widgets/gradient_background.dart';
@@ -16,7 +17,6 @@ class IncidentsScreen extends StatefulWidget {
   State<IncidentsScreen> createState() => _IncidentsScreenState();
 }
 
-// ...existing code...
 class _IncidentsScreenState extends State<IncidentsScreen> {
   bool _loading = false;
   String? _error;
@@ -210,21 +210,19 @@ class _IncidentsScreenState extends State<IncidentsScreen> {
               ],
             ),
 
-            floatingActionButton: userService.isAdmin
-                ? null
-                : FloatingActionButton(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/create-incident',
-                      ).then((_) => _load(userId: _selectedUserId));
-                    },
-                    child: const Icon(Icons.add),
-                  ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegisterReport()),
+                );
+                _load(userId: _selectedUserId);
+              },
+              child: const Icon(Icons.add),
+            ),
           ),
         );
       },
     );
   }
 }
-// ...existing code...

@@ -20,7 +20,9 @@ namespace reports_backend.Repositories
 
     public async Task<IEnumerable<Incident>> GetAllAsync()
     {
-      return await _context.Incidents.ToListAsync();
+      return await _context.Incidents
+    .OrderByDescending(i => i.DateReported)
+    .ToListAsync();
     }
 
     public async Task<Incident?> GetByIdAsync(int id)
@@ -31,8 +33,9 @@ namespace reports_backend.Repositories
     public async Task<IEnumerable<Incident>> GetByUserIdAsync(int userId)
     {
       return await _context.Incidents
-        .Where(i => i.UserId == userId)
-        .ToListAsync();
+      .Where(i => i.UserId == userId)
+      .OrderByDescending(i => i.DateReported)
+      .ToListAsync();
     }
 
     public async Task<Incident> CreateAsync(Incident incident)

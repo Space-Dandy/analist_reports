@@ -2,6 +2,7 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reports_app/models/incidents.dart';
+import 'package:reports_app/screens/users_details.dart';
 import 'package:reports_app/services/incidents_service.dart';
 import 'package:reports_app/services/user_service.dart';
 import 'package:reports_app/utils/base_url.dart';
@@ -72,7 +73,15 @@ class IncidentDetails extends StatelessWidget {
         return GradientBackground(
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: AppBar(title: const Text('Detalle del incidente')),
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.black87),
+              title: const Text(
+                'Detalle del incidente',
+                style: TextStyle(color: Colors.black87),
+              ),
+            ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -134,16 +143,60 @@ class IncidentDetails extends StatelessWidget {
                   const Divider(),
                   const SizedBox(height: 8),
                   const Text('Usuario que reportó', style: captionStyle),
-                  Text(inc.userName, style: bodyStyle),
+
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              UsersDetails(id: inc.userId, name: inc.userName),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        inc.userName,
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 8),
                   if (inc.authUserName != null &&
                       inc.authUserName!.isNotEmpty) ...[
                     const Text('Autorizado por', style: captionStyle),
-                    Text(inc.authUserName!, style: bodyStyle),
+
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => UsersDetails(
+                              id: inc.authUserId,
+                              name: inc.authUserName!,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(
+                          inc.authUserName!,
+                          style: TextStyle(color: Colors.green, fontSize: 16),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                   ],
                   if (formattedResolution != null) ...[
-                    const Text('Resolution date', style: captionStyle),
+                    const Text('Fecha de resolución', style: captionStyle),
                     Text(formattedResolution, style: bodyStyle),
                     const SizedBox(height: 8),
                   ],
@@ -153,20 +206,32 @@ class IncidentDetails extends StatelessWidget {
                       children: [
                         Expanded(
                           child: ButtonWidget(
-                            buttonText: Text(
+                            buttonText: const Text(
                               'Rechazar',
                               style: TextStyle(color: Colors.white),
                             ),
                             handlePressed: () {
-                              incidentService.resolveIncident(
-                                userSvc.token!,
-                                inc.id,
-                                2,
-                              );
+                              incidentService
+                                  .resolveIncident(userSvc.token!, inc.id, 2)
+                                  .then((val) {
+                                    if (!val.error) {
+                                      if (!context.mounted) return;
+                                      Navigator.pop(context);
+                                    }
+                                    if (!context.mounted) return;
+                                    Flushbar(
+                                      title: val.error ? 'Error' : 'Éxito',
+                                      message: val.message,
+                                      duration: const Duration(seconds: 3),
+                                      backgroundColor: val.error
+                                          ? Colors.red
+                                          : Colors.green,
+                                    ).show(context);
+                                  });
                             },
-                            gradientColors: [
-                              const Color(0xFFFF512F),
-                              const Color(0xFFDD2476),
+                            gradientColors: const [
+                              Color(0xFFFF512F),
+                              Color(0xFFDD2476),
                             ],
                           ),
                         ),
@@ -196,9 +261,9 @@ class IncidentDetails extends StatelessWidget {
                                     ).show(context);
                                   });
                             },
-                            gradientColors: [
-                              const Color(0xFFA8ff78),
-                              const Color(0xFF78ffd6),
+                            gradientColors: const [
+                              Color(0xFFA8ff78),
+                              Color(0xFF78ffd6),
                             ],
                           ),
                         ),

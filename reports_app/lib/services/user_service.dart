@@ -135,6 +135,43 @@ class UserService extends ChangeNotifier {
     }
   }
 
+  Future<RequestResponseModel> getUserById(int id) async {
+    Map<String, String> requestHeaders = {'Content-Type': 'application/json'};
+    setIsLoading(true);
+    final url = Uri.http(baseUrl, 'api/users/$id');
+    try {
+      final resp = await http
+          .get(url, headers: requestHeaders)
+          .timeout(const Duration(seconds: 10));
+      if (resp.statusCode >= 500) {
+        return RequestResponseModel(
+          error: true,
+          message:
+              'Error del servidor ${resp.statusCode}. Favor de contactar al administrador.',
+        );
+      }
+      final userRes = CreateUserRes.fromJson(resp.body);
+      if (!userRes.success) {
+        return RequestResponseModel(
+          error: true,
+          message: userRes.message ?? 'Fallo al obtener el usuario.',
+        );
+      }
+      return RequestResponseModel(
+        error: false,
+        message: 'Usuario obtenido correctamente.',
+      );
+    } on Exception catch (e) {
+      setIsLoading(false);
+      return RequestResponseModel(
+        error: true,
+        message: 'Error de conexión. Favor de intentar más tarde. $e',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   Future<RequestResponseModel> getAllUsers(String idToken) async {
     Map<String, String> requestHeaders = {
       'Content-Type': 'application/json',

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -78,11 +79,10 @@ namespace reports_backend.Controllers
     // POST: api/incidents
     [HttpPost]
     public async Task<ActionResult<Incident>> Create(
-    [FromForm] string folioNumber,
-    [FromForm] string title,
-    [FromForm] string description,
-    [FromForm] IncidentStatus status,
-    [FromForm] IFormFile? imageFile)
+      [FromForm] string title,
+      [FromForm] string description,
+      [FromForm] int status,
+      [FromForm] IFormFile? imageFile)
     {
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       if (userIdClaim == null)
@@ -93,7 +93,7 @@ namespace reports_backend.Controllers
       string? imagePath = null;
       if (imageFile != null && imageFile.Length > 0)
       {
-        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "src", "wwwroot", "images");
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
         if (!Directory.Exists(uploadsFolder))
           Directory.CreateDirectory(uploadsFolder);
 
@@ -114,15 +114,17 @@ namespace reports_backend.Controllers
       {
         UserId = userId,
         UserName = userNameClaim,
-        FolioNumber = folioNumber,
+        FolioNumber = "",
         Title = title,
         Description = description,
-        Status = status,
+        Status = (IncidentStatus)status,
         ImagePath = imagePath,
-        DateReported = DateTime.Now
+        DateReported = DateTime.UtcNow
       };
 
       var created = await _repository.CreateAsync(incident);
+      created.FolioNumber = $"FOL-{created.Id:D6}";
+      var _ = await _repository.UpdateAsync(created);
       return CreatedAtAction(nameof(GetById), new { id = created.Id }, ApiResponse<Incident>.SuccessResponse(created, "Incident created successfully."));
     }
 
@@ -165,7 +167,6 @@ namespace reports_backend.Controllers
       if (userIdClaim == null || existing.UserId != int.Parse(userIdClaim))
         return StatusCode(403, ApiResponse<string>.ErrorResponse("Forbidden"));
 
-      existing.FolioNumber = incidentDto.FolioNumber;
       existing.Title = incidentDto.Title;
       existing.Description = incidentDto.Description;
       existing.Status = incidentDto.Status;
@@ -173,47 +174,6 @@ namespace reports_backend.Controllers
 
       var updated = await _repository.UpdateAsync(existing);
       return Ok(ApiResponse<Incident>.SuccessResponse(updated!, ""));
-    }
-
-    // DELETE: api/incidents/{id}
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
-    {
-      var existing = await _repository.GetByIdAsync(id);
-      if (existing == null)
-        return NotFound(ApiResponse<string>.ErrorResponse("Incident not found."));
-
-      // Verify user owns this incident
-      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-      if (userIdClaim == null || existing.UserId != int.Parse(userIdClaim))
-        return StatusCode(403, ApiResponse<string>.ErrorResponse("Forbidden"));
-
-      await _repository.DeleteAsync(id);
-      return Ok(ApiResponse<string>.SuccessResponse(null, "Incident deleted successfully."));
-    }
-
-    [HttpPost("upload-image")]
-    [AllowAnonymous]
-    public async Task<IActionResult> UploadImage(IFormFile file)
-    {
-      if (file == null || file.Length == 0)
-        return BadRequest("No file uploaded.");
-
-      var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-      if (!Directory.Exists(uploadsFolder))
-        Directory.CreateDirectory(uploadsFolder);
-
-      var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-      var filePath = Path.Combine(uploadsFolder, fileName);
-
-      using (var stream = new FileStream(filePath, FileMode.Create))
-      {
-        await file.CopyToAsync(stream);
-      }
-
-      // Return the relative path to save in DB
-      var relativePath = $"/images/{fileName}";
-      return Ok(new { path = relativePath });
     }
   }
 }

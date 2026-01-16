@@ -88,7 +88,6 @@ class IncidentsService extends ChangeNotifier {
       final resp = await http
           .post(url, headers: requestHeaders, body: json.encode(status))
           .timeout(const Duration(seconds: 10));
-      Logger().i('resp body: ${resp.body}');
       if (resp.statusCode >= 500) {
         return RequestResponseModel(
           error: true,
@@ -106,6 +105,75 @@ class IncidentsService extends ChangeNotifier {
       return RequestResponseModel(
         error: false,
         message: 'Incidente resuelto correctamente.',
+      );
+    } catch (e) {
+      return RequestResponseModel(
+        error: true,
+        message: 'Ocurrió un error inesperado: $e',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  Future<RequestResponseModel> createIncident(
+    String idToken, {
+    required String title,
+    required String description,
+    required int status,
+    String? imageFilePath,
+  }) async {
+    setIsLoading(true);
+    final uri = Uri.http(baseUrl, 'api/incidents');
+
+    try {
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $idToken';
+      request.fields['title'] = title;
+      request.fields['description'] = description;
+      request.fields['status'] = status.toString();
+
+      if (imageFilePath != null && imageFilePath.isNotEmpty) {
+        final file = await http.MultipartFile.fromPath(
+          'imageFile',
+          imageFilePath,
+        );
+        request.files.add(file);
+      }
+
+      final streamed = await request.send();
+      final resp = await http.Response.fromStream(streamed);
+      Logger().i('create incident status: ${resp.statusCode}');
+      Logger().i('create incident resp body: ${resp.body}');
+
+      if (resp.statusCode >= 500) {
+        return RequestResponseModel(
+          error: true,
+          message:
+              'Error del servidor ${resp.statusCode}. Favor de contactar al administrador.',
+        );
+      }
+
+      final Map<String, dynamic> body =
+          json.decode(resp.body) as Map<String, dynamic>;
+      if (body['success'] != true) {
+        return RequestResponseModel(
+          error: true,
+          message: body['message'] ?? 'Fallo al crear el incidente.',
+        );
+      }
+
+      final data = body['data'] as Map<String, dynamic>?;
+      if (data != null) {
+        final created = Incident.fromMap(data);
+        final newList = List<Incident>.from(_incidents);
+        newList.insert(0, created);
+        setIncidents(newList);
+      }
+
+      return RequestResponseModel(
+        error: false,
+        message: body['message'] ?? 'Incidente creado correctamente.',
       );
     } catch (e) {
       return RequestResponseModel(
