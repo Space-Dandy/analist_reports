@@ -22,7 +22,7 @@ class _UsersDetailsState extends State<UsersDetails> {
   @override
   void initState() {
     super.initState();
-    _fetchUser();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchUser());
   }
 
   Future<void> _fetchUser() async {

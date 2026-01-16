@@ -136,13 +136,17 @@ class UserService extends ChangeNotifier {
   }
 
   Future<RequestResponseModel> getUserById(int id) async {
-    Map<String, String> requestHeaders = {'Content-Type': 'application/json'};
+    final Map<String, String> requestHeaders = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
     setIsLoading(true);
     final url = Uri.http(baseUrl, 'api/users/$id');
     try {
       final resp = await http
           .get(url, headers: requestHeaders)
           .timeout(const Duration(seconds: 10));
+
       if (resp.statusCode >= 500) {
         return RequestResponseModel(
           error: true,
@@ -150,6 +154,7 @@ class UserService extends ChangeNotifier {
               'Error del servidor ${resp.statusCode}. Favor de contactar al administrador.',
         );
       }
+
       final userRes = CreateUserRes.fromJson(resp.body);
       if (!userRes.success) {
         return RequestResponseModel(
@@ -157,6 +162,18 @@ class UserService extends ChangeNotifier {
           message: userRes.message ?? 'Fallo al obtener el usuario.',
         );
       }
+
+      final fetched = userRes.data;
+      if (fetched != null) {
+        final idx = _users.indexWhere((u) => u.id == fetched.id);
+        if (idx >= 0) {
+          _users[idx] = fetched;
+        } else {
+          _users.add(fetched);
+        }
+        notifyListeners();
+      }
+
       return RequestResponseModel(
         error: false,
         message: 'Usuario obtenido correctamente.',
