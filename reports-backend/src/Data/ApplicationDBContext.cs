@@ -12,11 +12,6 @@ namespace reports_backend.Data
     public DbSet<Incident> Incidents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-      modelBuilder.Entity<Incident>()
-        .HasOne(i => i.User)
-        .WithMany()
-        .HasForeignKey(i => i.UserId);
-    }
+    { }
   }
 }

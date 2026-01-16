@@ -1,28 +1,37 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
-import 'package:reports_app/screens/signup_screen.dart';
+import 'package:provider/provider.dart';
 
+import '../services/user_service.dart';
 import '../widgets/button_widget.dart';
 import '../widgets/glassmorphism_input.dart';
 import '../widgets/gradient_background.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _ageController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
+    _ageController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -31,7 +40,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF6B4EFF)),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -44,13 +60,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     // Logo
                     const Icon(
-                      Icons.assessment_rounded,
+                      Icons.person_add_rounded,
                       size: 80,
                       color: Color(0xFF6B4EFF),
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Reporte de Incidentes',
+                      'Crear Cuenta',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
@@ -60,7 +76,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 48),
 
-                    // Email Field
+                    // Nombre
+                    GlassmorphismInput(
+                      controller: _nameController,
+                      labelText: 'Nombre',
+                      hintText: 'Ingresa tu nombre completo',
+                      prefixIcon: Icons.person_outline,
+                      keyboardType: TextInputType.name,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresa tu nombre';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Email
                     GlassmorphismInput(
                       controller: _emailController,
                       labelText: 'Email',
@@ -79,7 +111,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Password Field
+                    // Edad
+                    GlassmorphismInput(
+                      controller: _ageController,
+                      labelText: 'Edad',
+                      hintText: 'Ingresa tu edad',
+                      prefixIcon: Icons.calendar_today_outlined,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresa tu edad';
+                        }
+                        final age = int.tryParse(value);
+                        if (age == null) {
+                          return 'Ingresa un número válido';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Password
                     GlassmorphismInput(
                       controller: _passwordController,
                       labelText: 'Contraseña',
@@ -103,24 +155,61 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Ingresa tu contraseña';
                         }
+                        if (value.length < 6) {
+                          return 'La contraseña debe tener al menos 6 caracteres';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Confirmar password
+                    GlassmorphismInput(
+                      controller: _confirmPasswordController,
+                      labelText: 'Confirmar Contraseña',
+                      hintText: 'Confirma tu contraseña',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: _obscureConfirmPassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: const Color(0xFF6B4EFF),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Confirma tu contraseña';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Las contraseñas no coinciden';
+                        }
                         return null;
                       },
                     ),
                     const SizedBox(height: 24),
 
-                    // Login Button
+                    // Register Button
                     ButtonWidget(
                       buttonText: _isLoading
                           ? const Text('')
                           : const Text(
-                              'Login',
+                              'Registrarse',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                      icon: _isLoading ? null : const Icon(Icons.login_rounded),
-                      handlePressed: _isLoading ? null : _handleLogin,
+                      icon: _isLoading
+                          ? null
+                          : const Icon(Icons.person_add_rounded),
+                      handlePressed: _isLoading ? null : _handleSignup,
                       disabled: _isLoading,
                       fullWidth: true,
                       buttonHeight: 56,
@@ -144,18 +233,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     const SizedBox(height: 16),
 
-                    // Register Link
+                    // Login Link
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignupScreen(),
-                          ),
-                        );
-                      },
+                      onPressed: () => Navigator.pop(context),
                       child: const Text(
-                        "¿No tienes una cuenta? Regístrate",
+                        "¿Ya tienes una cuenta? Inicia sesión",
                         style: TextStyle(color: Color(0xFF6B4EFF)),
                       ),
                     ),
@@ -169,23 +251,36 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() async {
+  void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      // TODO: Implement login API call
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
+      final userService = Provider.of<UserService>(context, listen: false);
+
+      final response = await userService.createUser(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        int.parse(_ageController.text.trim()),
+        _passwordController.text,
+      );
 
       setState(() {
         _isLoading = false;
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login functionality coming soon!')),
-        );
+        if (!response.error) {
+          Navigator.pop(context);
+        }
+        await Flushbar(
+          title: response.error ? 'Error' : 'Éxito',
+          message: response.message,
+          duration: const Duration(seconds: 3),
+          backgroundColor: response.error ? Colors.redAccent : Colors.green,
+          flushbarPosition: FlushbarPosition.TOP,
+        ).show(context);
       }
     }
   }

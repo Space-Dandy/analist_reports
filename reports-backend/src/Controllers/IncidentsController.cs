@@ -1,8 +1,12 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using reports_backend.DTOs;
 using reports_backend.Models;
@@ -26,8 +30,11 @@ namespace reports_backend.Controllers
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Incident>>> GetAll()
     {
+      if (!User.IsInRole("Admin"))
+        return StatusCode(403, ApiResponse<string>.ErrorResponse("Only admins can view all incidents."));
+
       var incidents = await _repository.GetAllAsync();
-      return Ok(incidents);
+      return Ok(ApiResponse<IEnumerable<Incident>>.SuccessResponse(incidents));
     }
 
     // GET: api/incidents/{id}
@@ -37,9 +44,9 @@ namespace reports_backend.Controllers
       var incident = await _repository.GetByIdAsync(id);
 
       if (incident == null)
-        return NotFound();
+        return NotFound(ApiResponse<string>.ErrorResponse("Incident not found."));
 
-      return Ok(incident);
+      return Ok(ApiResponse<Incident>.SuccessResponse(incident));
     }
 
     // GET: api/incidents/my
@@ -50,39 +57,89 @@ namespace reports_backend.Controllers
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
       if (userIdClaim == null)
-        return Unauthorized();
+        return Unauthorized(ApiResponse<string>.ErrorResponse("Unauthorized"));
 
       var userId = int.Parse(userIdClaim);
       var incidents = await _repository.GetByUserIdAsync(userId);
 
-      return Ok(incidents);
+      return Ok(ApiResponse<IEnumerable<Incident>>.SuccessResponse(incidents));
     }
 
     // POST: api/incidents
     [HttpPost]
-    public async Task<ActionResult<Incident>> Create([FromBody] CreateIncidentDto incidentDto)
+    public async Task<ActionResult<Incident>> Create(
+    [FromForm] string folioNumber,
+    [FromForm] string title,
+    [FromForm] string description,
+    [FromForm] IncidentStatus status,
+    [FromForm] IFormFile? imageFile)
     {
-      // Get userId from JWT token
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
       if (userIdClaim == null)
-        return Unauthorized();
+        return Unauthorized(ApiResponse<string>.ErrorResponse("Unauthorized"));
 
       var userId = int.Parse(userIdClaim);
+
+      string? imagePath = null;
+      if (imageFile != null && imageFile.Length > 0)
+      {
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "src", "wwwroot", "images");
+        if (!Directory.Exists(uploadsFolder))
+          Directory.CreateDirectory(uploadsFolder);
+
+        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+          await imageFile.CopyToAsync(stream);
+        }
+
+        imagePath = $"/images/{fileName}";
+      }
+
+      var userNameClaim = User.FindFirstValue(ClaimTypes.Name) ?? "";
 
       var incident = new Incident
       {
         UserId = userId,
-        FolioNumber = incidentDto.FolioNumber,
-        Title = incidentDto.Title,
-        Description = incidentDto.Description,
-        Status = incidentDto.Status,
-        ImagePath = incidentDto.ImagePath,
+        UserName = userNameClaim,
+        FolioNumber = folioNumber,
+        Title = title,
+        Description = description,
+        Status = status,
+        ImagePath = imagePath,
         DateReported = DateTime.UtcNow
       };
 
       var created = await _repository.CreateAsync(incident);
-      return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+      return CreatedAtAction(nameof(GetById), new { id = created.Id }, ApiResponse<Incident>.SuccessResponse(created, "Incident created successfully."));
+    }
+
+    [HttpPost("{id}/authorize")]
+    public async Task<IActionResult> AuthorizeIncident(int id, [FromBody] IncidentStatus status)
+    {
+      // Solo admins
+      var isAdmin = User.IsInRole("Admin");
+      if (!isAdmin) return Unauthorized(ApiResponse<string>.ErrorResponse("Unauthorized"));
+
+      var incident = await _repository.GetByIdAsync(id);
+      if (incident == null)
+        return NotFound(ApiResponse<string>.ErrorResponse("Incident not found."));
+
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userNameClaim = User.FindFirst(ClaimTypes.Name)?.Value;
+      if (userIdClaim == null)
+        return Unauthorized(ApiResponse<string>.ErrorResponse("Unauthorized"));
+
+      incident.AuthUserId = int.Parse(userIdClaim);
+      incident.AuthUserName = userNameClaim ?? "";
+      incident.ResolutionDate = DateTime.UtcNow;
+      incident.Status = status;
+
+      await _repository.UpdateAsync(incident);
+
+      return Ok(ApiResponse<Incident>.SuccessResponse(incident, "Incident status updated."));
     }
 
     // PUT: api/incidents/{id}
@@ -91,12 +148,11 @@ namespace reports_backend.Controllers
     {
       var existing = await _repository.GetByIdAsync(id);
       if (existing == null)
-        return NotFound();
+        return NotFound(ApiResponse<string>.ErrorResponse("Incident not found."));
 
-      // Verify user owns this incident
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       if (userIdClaim == null || existing.UserId != int.Parse(userIdClaim))
-        return Forbid();
+        return StatusCode(403, ApiResponse<string>.ErrorResponse("Forbidden"));
 
       existing.FolioNumber = incidentDto.FolioNumber;
       existing.Title = incidentDto.Title;
@@ -105,7 +161,7 @@ namespace reports_backend.Controllers
       existing.ImagePath = incidentDto.ImagePath;
 
       var updated = await _repository.UpdateAsync(existing);
-      return Ok(updated);
+      return Ok(ApiResponse<Incident>.SuccessResponse(updated!, ""));
     }
 
     // DELETE: api/incidents/{id}
@@ -114,15 +170,39 @@ namespace reports_backend.Controllers
     {
       var existing = await _repository.GetByIdAsync(id);
       if (existing == null)
-        return NotFound();
+        return NotFound(ApiResponse<string>.ErrorResponse("Incident not found."));
 
       // Verify user owns this incident
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       if (userIdClaim == null || existing.UserId != int.Parse(userIdClaim))
-        return Forbid();
+        return StatusCode(403, ApiResponse<string>.ErrorResponse("Forbidden"));
 
       await _repository.DeleteAsync(id);
-      return NoContent();
+      return Ok(ApiResponse<string>.SuccessResponse(null, "Incident deleted successfully."));
+    }
+
+    [HttpPost("upload-image")]
+    [AllowAnonymous]
+    public async Task<IActionResult> UploadImage(IFormFile file)
+    {
+      if (file == null || file.Length == 0)
+        return BadRequest("No file uploaded.");
+
+      var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+      if (!Directory.Exists(uploadsFolder))
+        Directory.CreateDirectory(uploadsFolder);
+
+      var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+      var filePath = Path.Combine(uploadsFolder, fileName);
+
+      using (var stream = new FileStream(filePath, FileMode.Create))
+      {
+        await file.CopyToAsync(stream);
+      }
+
+      // Return the relative path to save in DB
+      var relativePath = $"/images/{fileName}";
+      return Ok(new { path = relativePath });
     }
   }
 }

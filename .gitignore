@@ -42,6 +42,8 @@ reports-backend/appsettings.json
 *.db-shm
 *.db-wal
 
+# Images
+reports-backend/wwwroot/images/
 # Entity Framework Migrations (optional - remove if you want to track migrations)
 reports-backend/Migrations/
 

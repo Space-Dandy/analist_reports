@@ -1,3 +1,2 @@
-class ApiConfig {
-  static const String baseUrl = 'http://localhost:5000/api';
-}
+// const String baseUrl = "localhost:5000";
+const String baseUrl = "10.0.2.2:5000";

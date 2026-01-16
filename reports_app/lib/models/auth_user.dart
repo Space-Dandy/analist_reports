@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'user.dart';
 
 class AuthUser extends User {
@@ -35,18 +36,15 @@ class AuthUser extends User {
   String toJson() => json.encode(toMap());
 
   factory AuthUser.fromMap(Map<String, dynamic> json) => AuthUser(
-        id: json["id"],
-        email: json["email"],
-        name: json["name"],
-        age: json["age"],
-        position: json["position"],
-        passwordHash: json["passwordHash"],
-        token: json["token"],
-      );
+    id: json["id"],
+    email: json["email"],
+    name: json["name"],
+    age: json["age"],
+    position: json["position"],
+    passwordHash: json["passwordHash"],
+    token: json["token"],
+  );
 
   @override
-  Map<String, dynamic> toMap() => {
-        ...super.toMap(),
-        "token": token,
-      };
+  Map<String, dynamic> toMap() => {...super.toMap(), "token": token};
 }

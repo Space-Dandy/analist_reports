@@ -1,24 +1,64 @@
 import 'dart:convert';
 
 class UserData {
-  List<User> data;
+  List<User>? data;
+  bool success;
+  String? message;
 
-  UserData({required this.data});
+  UserData({required this.data, required this.success, required this.message});
 
   factory UserData.fromJson(String str) => UserData.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
-  factory UserData.fromMap(Map<String, dynamic> json) =>
-      UserData(data: List<User>.from(json["data"].map((x) => User.fromMap(x))));
+  factory UserData.fromMap(Map<String, dynamic> json) => UserData(
+    data: json["data"] == null
+        ? null
+        : List<User>.from(json["data"].map((x) => User.fromMap(x))),
+    success: json["success"],
+    message: json["message"],
+  );
 
   Map<String, dynamic> toMap() => {
-    "data": List<dynamic>.from(data.map((x) => x.toMap())),
+    "data": data == null
+        ? null
+        : List<dynamic>.from(data!.map((x) => x.toMap())),
+    "success": success,
+    "message": message,
+  };
+}
+
+class CreateUserRes {
+  bool success;
+  User? data;
+  String? message;
+
+  CreateUserRes({
+    required this.data,
+    required this.success,
+    required this.message,
+  });
+
+  factory CreateUserRes.fromJson(String str) =>
+      CreateUserRes.fromMap(json.decode(str));
+
+  String toJson() => json.encode(toMap());
+
+  factory CreateUserRes.fromMap(Map<String, dynamic> json) => CreateUserRes(
+    data: json["data"] == null ? null : User.fromMap(json["data"]),
+    success: json["success"],
+    message: json["message"],
+  );
+
+  Map<String, dynamic> toMap() => {
+    "data": data?.toMap(),
+    "success": success,
+    "message": message,
   };
 }
 
 class User {
-  int id;
+  int? id;
   String email;
   String name;
   int age;

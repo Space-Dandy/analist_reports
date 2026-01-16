@@ -20,22 +20,17 @@ namespace reports_backend.Repositories
 
     public async Task<IEnumerable<Incident>> GetAllAsync()
     {
-      return await _context.Incidents
-        .Include(i => i.User)
-        .ToListAsync();
+      return await _context.Incidents.ToListAsync();
     }
 
     public async Task<Incident?> GetByIdAsync(int id)
     {
-      return await _context.Incidents
-        .Include(i => i.User)
-        .FirstOrDefaultAsync(i => i.Id == id);
+      return await _context.Incidents.FirstOrDefaultAsync(i => i.Id == id);
     }
 
     public async Task<IEnumerable<Incident>> GetByUserIdAsync(int userId)
     {
       return await _context.Incidents
-        .Include(i => i.User)
         .Where(i => i.UserId == userId)
         .ToListAsync();
     }
